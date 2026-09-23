@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Xcode / Swift Package Manager
+.build/
+build/
+DerivedData/
+*.xcodeproj
+*.xcworkspace
+
+# MyScreen local artifacts & temporary bundles
+*.dmg
+*.zip
+dmg_stage/
+
+# User data
+local_wallpapers.json
