@@ -47,8 +47,12 @@ NBSP_1=$'\xc2\xa0'
 NBSP_2=$'\xc2\xa0\xc2\xa0'
 cp -R "$BUILD_DIR/Install MyScreen.app" "$STAGE_DIR/$NBSP_1.app"
 
-# 3. Use create-dmg for professional layout and styling
-if command -v create-dmg &>/dev/null; then
+DMGBUILD_BIN="$DIR/.build/dmg_venv/bin/dmgbuild"
+
+if [ -f "$DMGBUILD_BIN" ]; then
+    echo "==> Building pixel-perfect DMG with dmgbuild (deterministic DS_Store)..."
+    "$DMGBUILD_BIN" -s "$DIR/dmg_settings.py" "$VOL_NAME" "$DMG_FINAL"
+elif command -v create-dmg &>/dev/null; then
     echo "==> Using create-dmg to generate styled installer..."
     create-dmg \
         --volname "$VOL_NAME" \
