@@ -52,18 +52,15 @@ public struct WallpaperCardView: View {
                                 .foregroundColor(.white)
                                 .lineLimit(1)
 
-                            HStack(spacing: 6) {
-                                Text(item.creator)
-                                    .font(.system(size: 11, weight: .medium))
-                                    .foregroundColor(Color(white: 0.7))
-                                    .lineLimit(1)
-
-                                Spacer()
-
+                            HStack(spacing: 4) {
+                                Image(systemName: "play.circle.fill")
+                                    .font(.system(size: 9))
                                 Text("\(item.durationSeconds)s")
                                     .font(.system(size: 10, weight: .medium))
-                                    .foregroundColor(Color(white: 0.6))
+
+                                Spacer()
                             }
+                            .foregroundColor(Color(white: 0.75))
                         }
                         .padding(10)
 
