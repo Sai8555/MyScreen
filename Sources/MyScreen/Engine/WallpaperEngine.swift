@@ -217,10 +217,14 @@ public final class WallpaperEngine: ObservableObject {
         session.player = queuePlayer
 
         let win = WallpaperWindow(screen: screen, player: queuePlayer)
-        win.orderBack(nil)
+        win.orderFrontRegardless()
+        win.setIsVisible(true)
         session.window = win
 
         queuePlayer.play()
+        if queuePlayer.rate == 0 {
+            queuePlayer.playImmediately(atRate: 1.0)
+        }
         session.isPlaying = true
 
         self.isPlaying = true
@@ -289,6 +293,10 @@ public final class WallpaperEngine: ObservableObject {
 
         queuePlayer.seek(to: currentTime)
         queuePlayer.play()
+        if queuePlayer.rate == 0 {
+            queuePlayer.playImmediately(atRate: 1.0)
+        }
+        window.orderFrontRegardless()
         print("[WallpaperEngine] Seamlessly upgraded screen [\(session.screen.localizedName)] to Full 4K Ultra HD Master Quality!")
     }
 
@@ -364,6 +372,10 @@ public final class WallpaperEngine: ObservableObject {
                     } catch {
                         print("[WallpaperEngine] Error setting desktop image: \(error.localizedDescription)")
                     }
+                }
+                // Ensure live wallpaper window stays front-and-center over system background
+                for (_, session) in self.sessions {
+                    session.window?.orderFrontRegardless()
                 }
             }
 
@@ -447,7 +459,7 @@ public final class WallpaperEngine: ObservableObject {
             if let session = sessions[id] {
                 session.screen = screen
                 session.window?.updateFrame(for: screen)
-                session.window?.orderBack(nil)
+                session.window?.orderFrontRegardless()
                 if session.isPlaying {
                     session.player?.play()
                 }
