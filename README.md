@@ -1,7 +1,7 @@
 # MyScreen 🖥️✨
 
 <div align="center">
-  <img src="docs/assets/app_icon.jpg" width="110" height="110" style="border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);" alt="MyScreen Icon" />
+  <img src="docs/assets/app_icon.png" width="150" height="150" style="border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);" alt="MyScreen Icon" />
   <h2>MyScreen</h2>
   <h3>Next-Generation 4K Live Video Wallpaper Engine for macOS</h3>
   <p>Bring your desktop to life with buttery-smooth 4K video wallpapers, seamless multi-monitor playback, and lock screen integration.</p>
@@ -15,14 +15,6 @@
   <br/><br/>
   <!-- Live Video Playback Demo (Auto-plays on GitHub) -->
   <img src="docs/assets/demo.gif" width="900" style="border-radius: 14px; box-shadow: 0 16px 40px rgba(0,0,0,0.6);" alt="MyScreen Live Video Demo" />
-</div>
-
----
-
-## 📸 Interface Preview
-
-<div align="center">
-  <img src="docs/assets/home_ui_showcase.png" width="900" style="border-radius: 14px; box-shadow: 0 16px 40px rgba(0,0,0,0.6);" alt="MyScreen Home UI Showcase" />
 </div>
 
 ---
