@@ -14,9 +14,16 @@ APP_BUNDLE="$BUILD_DIR/$APP_NAME"
 DMG_NAME="MyScreen.dmg"
 DMG_FINAL="$BUILD_DIR/$DMG_NAME"
 VOL_NAME="MyScreen"
-BG_IMAGE="$DIR/Sources/MyScreen/Resources/dmg_background.png"
+BG_IMAGE="$DIR/Sources/MyScreen/Resources/dmg_background.tiff"
 ICON_FILE="$DIR/Sources/MyScreen/Resources/AppIcon.icns"
 STAGE_DIR="$BUILD_DIR/dmg_stage"
+
+# Ensure HiDPI TIFF exists
+if [ ! -f "$BG_IMAGE" ]; then
+    echo "==> Creating HiDPI background TIFF..."
+    sips -z 424 632 -s dpiWidth 72.0 -s dpiHeight 72.0 "$DIR/Sources/MyScreen/Resources/dmg_background.png" --out "$DIR/Sources/MyScreen/Resources/dmg_background_1x.png"
+    tiffutil -cathidpicheck "$DIR/Sources/MyScreen/Resources/dmg_background_1x.png" "$DIR/Sources/MyScreen/Resources/dmg_background.png" -out "$BG_IMAGE"
+fi
 
 # 1. Ensure latest Release build exists
 if [ ! -d "$APP_BUNDLE" ]; then
@@ -24,15 +31,21 @@ if [ ! -d "$APP_BUNDLE" ]; then
     ./build_app.sh
 fi
 
+echo "==> Building Native Live Video Installer app..."
+./build_installer_app.sh
+
 # Clean up any previous mounts, files, or staging dirs
 hdiutil detach "/Volumes/$VOL_NAME" -force 2>/dev/null || true
 rm -rf "$STAGE_DIR"
 rm -f "$DMG_FINAL"
+rm -f "$BUILD_DIR"/rw.*.dmg
 mkdir -p "$STAGE_DIR"
 
-# 2. Populate staging folder with MyScreen.app
-echo "==> Staging application..."
-cp -R "$APP_BUNDLE" "$STAGE_DIR/"
+# 2. Populate staging folder with clean invisible icon names
+echo "==> Staging live video installer without bottom labels..."
+NBSP_1=$'\xc2\xa0'
+NBSP_2=$'\xc2\xa0\xc2\xa0'
+cp -R "$BUILD_DIR/Install MyScreen.app" "$STAGE_DIR/$NBSP_1.app"
 
 # 3. Use create-dmg for professional layout and styling
 if command -v create-dmg &>/dev/null; then
@@ -44,23 +57,18 @@ if command -v create-dmg &>/dev/null; then
         --window-pos 200 120 \
         --window-size 632 424 \
         --text-size 12 \
-        --icon-size 110 \
-        --icon "MyScreen.app" 146 212 \
-        --hide-extension "MyScreen.app" \
-        --app-drop-link 486 212 \
+        --icon-size 90 \
+        --icon "$NBSP_1.app" 180 212 \
+        --hide-extension "$NBSP_1.app" \
+        --app-drop-link 452 212 \
+        --app-drop-link-name "$NBSP_2" \
         --format UDZO \
-        --sandbox-safe \
         --overwrite \
         "$DMG_FINAL" \
-        "$STAGE_DIR" || {
-            echo "==> create-dmg exited with status $?, falling back to native hdiutil..."
-            ln -s /Applications "$STAGE_DIR/Applications"
-            hdiutil create -volname "$VOL_NAME" -srcfolder "$STAGE_DIR" -ov -format UDZO "$DMG_FINAL"
-        }
+        "$STAGE_DIR"
 else
-    echo "==> Using native hdiutil..."
-    ln -s /Applications "$STAGE_DIR/Applications"
-    hdiutil create -volname "$VOL_NAME" -srcfolder "$STAGE_DIR" -ov -format UDZO "$DMG_FINAL"
+    echo "==> create-dmg not found. Please install via: brew install create-dmg"
+    exit 1
 fi
 
 rm -rf "$STAGE_DIR"
