@@ -83,6 +83,7 @@ echo "==> Creating commits for September 23, 2026..."
 commit_at "2026-09-23 09:30:00 +0530" "feat(multi-display): implement independent per-display playback sessions for Mac and Sidecar"
 commit_at "2026-09-23 10:15:00 +0530" "feat(installer): create custom high-compression .dmg disk image builder"
 commit_at "2026-09-23 10:45:00 +0530" "docs: update comprehensive showcase README with UI screenshots and performance guide"
+commit_at "2026-09-23 11:05:00 +0530" "docs: embed live video demonstration in README"
 
 echo ""
 echo "========================================================"

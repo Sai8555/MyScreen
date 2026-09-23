@@ -13,6 +13,15 @@
   [![Release](https://img.shields.io/badge/Release-v1.0.0-purple.svg)](https://github.com/Sai8555/MyScreen/releases)
 
   <br/><br/>
+  <!-- Live Video Playback Demo (Auto-plays on GitHub) -->
+  <img src="docs/assets/demo.gif" width="900" style="border-radius: 14px; box-shadow: 0 16px 40px rgba(0,0,0,0.6);" alt="MyScreen Live Video Demo" />
+</div>
+
+---
+
+## 📸 Interface Preview
+
+<div align="center">
   <img src="docs/assets/home_ui_showcase.png" width="900" style="border-radius: 14px; box-shadow: 0 16px 40px rgba(0,0,0,0.6);" alt="MyScreen Home UI Showcase" />
 </div>
 
