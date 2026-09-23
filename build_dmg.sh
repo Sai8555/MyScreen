@@ -65,7 +65,27 @@ if command -v create-dmg &>/dev/null; then
         --format UDZO \
         --overwrite \
         "$DMG_FINAL" \
-        "$STAGE_DIR"
+        "$STAGE_DIR" || {
+            echo "==> AppleScript automation restricted. Building via --skip-jenkins..."
+            rm -f "$BUILD_DIR"/rw.*.dmg
+            create-dmg \
+                --volname "$VOL_NAME" \
+                --volicon "$ICON_FILE" \
+                --background "$BG_IMAGE" \
+                --window-pos 200 120 \
+                --window-size 632 424 \
+                --text-size 12 \
+                --icon-size 90 \
+                --icon "$NBSP_1.app" 180 212 \
+                --hide-extension "$NBSP_1.app" \
+                --app-drop-link 452 212 \
+                --app-drop-link-name "$NBSP_2" \
+                --skip-jenkins \
+                --format UDZO \
+                --overwrite \
+                "$DMG_FINAL" \
+                "$STAGE_DIR"
+        }
 else
     echo "==> create-dmg not found. Please install via: brew install create-dmg"
     exit 1
