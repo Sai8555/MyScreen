@@ -78,13 +78,29 @@ It plays high-definition 4K and 1080p looped videos directly on your desktop lay
 
 ## 📥 Installation
 
-### Method 1: Pre-Built Disk Image (.dmg) — Recommended
+### Method 1: Homebrew Cask (Recommended — 1-Command, Zero Popups)
+
+Install directly using [Homebrew](https://brew.sh):
+
+```bash
+brew install sai8555/tap/myscreen
+```
+
+* Homebrew automatically downloads the latest release, places `MyScreen.app` into `/Applications`, and configures permissions cleanly without any security popups.
+
+Or tap first:
+```bash
+brew tap sai8555/tap
+brew install --cask myscreen
+```
+
+### Method 2: Pre-Built Disk Image (.dmg)
 1. Download the latest `MyScreen.dmg` from [Releases](https://github.com/Sai8555/MyScreen/releases).
 2. Open `MyScreen.dmg`.
 3. Drag **MyScreen** into your **Applications** folder.
 4. Launch MyScreen from Launchpad or Spotlight (`⌘ Space`).
 
-### Method 2: Build from Source
+### Method 3: Build from Source
 Ensure you have Xcode Command Line Tools installed (`xcode-select --install`):
 
 ```bash
@@ -92,11 +108,13 @@ Ensure you have Xcode Command Line Tools installed (`xcode-select --install`):
 git clone https://github.com/Sai8555/MyScreen.git
 cd MyScreen
 
-# 2. Build and install directly into /Applications
+# 2. Build and run in Xcode, or install directly into /Applications
+open Package.swift   # Opens in Xcode (Press Cmd + R)
+# OR compile and install directly:
 ./build_app.sh --install
 ```
 
-### Method 3: Build the `.dmg` Installer
+### Method 4: Build the `.dmg` Installer
 To build your own custom-styled `.dmg` disk image installer:
 ```bash
 ./build_dmg.sh
