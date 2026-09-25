@@ -67,6 +67,8 @@ cat <<EOF > "$CONTENTS_DIR/Info.plist"
     <true/>
     <key>NSRequiresAquaSystemAppearance</key>
     <false/>
+    <key>NSSupportsAppNap</key>
+    <false/>
     <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsArbitraryLoads</key>

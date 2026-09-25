@@ -19,6 +19,7 @@ public struct MenuBarView: View {
                 VStack(spacing: 8) {
                     ZStack(alignment: .bottomLeading) {
                         RemoteImageView(url: active.thumbnailUrl)
+                            .id("thumb_\(active.id)_\(active.thumbnailUrl?.absoluteString ?? "")")
                             .frame(height: 120)
                             .frame(maxWidth: .infinity)
                             .clipped()
@@ -88,6 +89,7 @@ public struct MenuBarView: View {
                     }
                     .padding(.vertical, 6)
                 }
+                .id("preview_card_\(active.id)")
             } else {
                 VStack(spacing: 8) {
                     Image(systemName: "sparkles.tv")

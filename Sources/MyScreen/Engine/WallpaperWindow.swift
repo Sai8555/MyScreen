@@ -64,7 +64,7 @@ public final class WallpaperWindow: NSWindow {
         let desktopLevel = Int(CGWindowLevelForKey(.desktopWindow))
         self.level = NSWindow.Level(desktopLevel + 1)
         self.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle, .fullScreenAuxiliary]
-        self.backgroundColor = .clear
+        self.backgroundColor = .black
         self.isOpaque = true
         self.hasShadow = false
         // CRITICAL: Let mouse clicks pass straight through to desktop icons

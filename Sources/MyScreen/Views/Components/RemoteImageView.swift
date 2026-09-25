@@ -62,16 +62,19 @@ public struct RemoteImageView: View {
             }
         }
         .onAppear {
-            loadImage()
+            loadImage(for: url)
         }
-        .onChange(of: url) { _ in
+        .onChange(of: url) { newUrl in
             self.image = nil
-            loadImage()
+            loadImage(for: newUrl)
         }
     }
 
-    private func loadImage() {
-        guard let url = url else { return }
+    private func loadImage(for targetURL: URL?) {
+        guard let url = targetURL else {
+            self.image = nil
+            return
+        }
 
         // Local file validation
         if url.isFileURL {

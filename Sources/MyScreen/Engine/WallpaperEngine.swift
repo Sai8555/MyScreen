@@ -78,6 +78,27 @@ public final class WallpaperEngine: ObservableObject {
     private var sessions: [CGDirectDisplayID: ScreenPlaybackSession] = [:]
     private var cancellables = Set<AnyCancellable>()
 
+    // Background playback assertion to prevent App Nap and video suspension
+    private var playbackActivityToken: NSObjectProtocol?
+
+    private func acquirePlaybackAssertion() {
+        if playbackActivityToken == nil {
+            playbackActivityToken = ProcessInfo.processInfo.beginActivity(
+                options: [.userInitiatedAllowingIdleSystemSleep, .latencyCritical],
+                reason: "Live 4K Desktop Wallpaper Playback"
+            )
+            print("[WallpaperEngine] Acquired system playback assertion (App Nap disabled).")
+        }
+    }
+
+    private func releasePlaybackAssertion() {
+        if let token = playbackActivityToken {
+            ProcessInfo.processInfo.endActivity(token)
+            playbackActivityToken = nil
+            print("[WallpaperEngine] Released system playback assertion.")
+        }
+    }
+
     private init() {
         setupObservers()
     }
@@ -212,6 +233,7 @@ public final class WallpaperEngine: ObservableObject {
         queuePlayer.isMuted = AppSettings.shared.isMuted || !isMain
         queuePlayer.volume = Float(AppSettings.shared.volume)
         queuePlayer.actionAtItemEnd = .none
+        queuePlayer.preventsDisplaySleepDuringVideoPlayback = false
 
         session.looper = AVPlayerLooper(player: queuePlayer, templateItem: playerItem)
         session.player = queuePlayer
@@ -229,6 +251,7 @@ public final class WallpaperEngine: ObservableObject {
 
         self.isPlaying = true
         self.isPausedByPower = false
+        acquirePlaybackAssertion()
         print("[WallpaperEngine] Started live playback on screen [\(screen.localizedName)] (ID: \(displayID)) with '\(item.title)'")
     }
 
@@ -401,6 +424,7 @@ public final class WallpaperEngine: ObservableObject {
             session.pause()
         }
         isPlaying = false
+        releasePlaybackAssertion()
     }
 
     public func resume() {
@@ -408,6 +432,9 @@ public final class WallpaperEngine: ObservableObject {
             session.resume()
         }
         isPlaying = !sessions.isEmpty
+        if isPlaying {
+            acquirePlaybackAssertion()
+        }
     }
 
     public func togglePlayback() {
@@ -425,6 +452,7 @@ public final class WallpaperEngine: ObservableObject {
         sessions.removeAll()
         currentItem = nil
         isPlaying = false
+        releasePlaybackAssertion()
     }
 
     // MARK: - Display & Power Management

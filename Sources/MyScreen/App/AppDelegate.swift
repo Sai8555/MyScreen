@@ -78,9 +78,18 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegat
             self.mainWindow = sender
             sender.orderOut(nil)
             print("[AppDelegate] Main window hidden to background. Wallpaper & menu bar continue.")
+            for session in WallpaperEngine.shared.activeSessions {
+                session.window?.orderFrontRegardless()
+            }
             return false // Keep window instance alive in memory
         }
         return true
+    }
+
+    public func windowWillClose(_ notification: Notification) {
+        for session in WallpaperEngine.shared.activeSessions {
+            session.window?.orderFrontRegardless()
+        }
     }
 
     /// Keep running in background when window is closed
