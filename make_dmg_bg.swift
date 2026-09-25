@@ -141,11 +141,17 @@ guard let pngData = rep.representation(using: .png, properties: [:]) else {
 }
 try! pngData.write(to: URL(fileURLWithPath: outputPngPath))
 
-// Export to TIFF (Multi-representation Retina TIFF for dmgbuild)
-let tiffImage = NSImage(size: NSSize(width: 632, height: 424))
-tiffImage.addRepresentation(rep)
-if let tiffData = tiffImage.tiffRepresentation {
-    try! tiffData.write(to: URL(fileURLWithPath: outputTiffPath))
-}
+// Create 1x PNG and genuine multi-representation Retina TIFF using sips and tiffutil
+let sips = Process()
+sips.executableURL = URL(fileURLWithPath: "/usr/bin/sips")
+sips.arguments = ["-z", "424", "632", "-s", "dpiWidth", "72.0", "-s", "dpiHeight", "72.0", outputPngPath, "--out", output1xPngPath]
+try! sips.run()
+sips.waitUntilExit()
 
-print("Successfully generated clean DMG background without any text overlap")
+let tiffutil = Process()
+tiffutil.executableURL = URL(fileURLWithPath: "/usr/bin/tiffutil")
+tiffutil.arguments = ["-cathidpicheck", output1xPngPath, outputPngPath, "-out", outputTiffPath]
+try! tiffutil.run()
+tiffutil.waitUntilExit()
+
+print("Successfully generated clean multi-rep HiDPI DMG background without any text overlap")
