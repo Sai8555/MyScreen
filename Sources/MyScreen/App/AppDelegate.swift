@@ -4,10 +4,93 @@ import SwiftUI
 public final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     public static var shared: AppDelegate?
     public private(set) var mainWindow: NSWindow?
+    public private(set) var preferencesWindow: NSWindow?
 
     public override init() {
         super.init()
         AppDelegate.shared = self
+    }
+
+    /// Accurately identifies the primary application window, excluding MenuBarExtra popovers, WallpaperWindows, preferences, and status panels
+    public func isMainAppWindow(_ win: NSWindow) -> Bool {
+        return win != preferencesWindow &&
+               !(win is WallpaperWindow) &&
+               !(win is NSPanel) &&
+               win.level == .normal &&
+               !win.className.contains("StatusBarWindow") &&
+               !win.className.contains("MenuBar") &&
+               !win.className.contains("Panel") &&
+               !win.className.contains("Popover") &&
+               win.canBecomeMain
+    }
+
+    private func configureUIWindows() {
+        for win in NSApp.windows where isMainAppWindow(win) {
+            self.mainWindow = win
+            win.isReleasedWhenClosed = false
+            win.delegate = self
+        }
+    }
+
+    /// Red cross button: Hides window to background without quitting the app or stopping wallpaper
+    public func windowShouldClose(_ sender: NSWindow) -> Bool {
+        if sender == preferencesWindow {
+            sender.orderOut(nil)
+            return false // Keep preferences window in memory
+        }
+        if isMainAppWindow(sender) {
+            self.mainWindow = sender
+            sender.orderOut(nil)
+            print("[AppDelegate] Main window hidden to background. Wallpaper & menu bar continue.")
+            for session in WallpaperEngine.shared.activeSessions {
+                session.window?.orderFrontRegardless()
+            }
+            return false // Keep window instance alive in memory
+        }
+        return true
+    }
+
+    /// Opens the dedicated Preferences window directly
+    public func openPreferencesWindow() {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+
+        if let win = preferencesWindow {
+            if win.isMiniaturized {
+                win.deminiaturize(nil)
+            }
+            win.setIsVisible(true)
+            win.makeKeyAndOrderFront(nil)
+            win.orderFrontRegardless()
+            return
+        }
+
+        let hostingView = NSHostingView(
+            rootView: SettingsView(onClose: { [weak self] in
+                self?.preferencesWindow?.orderOut(nil)
+            })
+            .preferredColorScheme(.dark)
+        )
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 670),
+            styleMask: [.titled, .closable, .miniaturizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Preferences"
+        window.titlebarAppearsTransparent = true
+        window.isReleasedWhenClosed = false
+        window.delegate = self
+        window.contentView = hostingView
+        window.center()
+        window.isMovableByWindowBackground = true
+        window.backgroundColor = NSColor(red: 0.08, green: 0.09, blue: 0.12, alpha: 1.0)
+
+        self.preferencesWindow = window
+        window.setIsVisible(true)
+        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
     }
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
@@ -52,39 +135,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegat
         }
     }
 
-    /// Accurately identifies the primary application window, excluding MenuBarExtra popovers, WallpaperWindows, and status panels
-    public func isMainAppWindow(_ win: NSWindow) -> Bool {
-        return !(win is WallpaperWindow) &&
-               !(win is NSPanel) &&
-               win.level == .normal &&
-               !win.className.contains("StatusBarWindow") &&
-               !win.className.contains("MenuBar") &&
-               !win.className.contains("Panel") &&
-               !win.className.contains("Popover") &&
-               win.canBecomeMain
-    }
 
-    private func configureUIWindows() {
-        for win in NSApp.windows where isMainAppWindow(win) {
-            self.mainWindow = win
-            win.isReleasedWhenClosed = false
-            win.delegate = self
-        }
-    }
-
-    /// Red cross button: Hides window to background without quitting the app or stopping wallpaper
-    public func windowShouldClose(_ sender: NSWindow) -> Bool {
-        if isMainAppWindow(sender) {
-            self.mainWindow = sender
-            sender.orderOut(nil)
-            print("[AppDelegate] Main window hidden to background. Wallpaper & menu bar continue.")
-            for session in WallpaperEngine.shared.activeSessions {
-                session.window?.orderFrontRegardless()
-            }
-            return false // Keep window instance alive in memory
-        }
-        return true
-    }
 
     public func windowWillClose(_ notification: Notification) {
         for session in WallpaperEngine.shared.activeSessions {

@@ -171,7 +171,7 @@ public struct MainContainerView: View {
 
                 // Settings Gear Button
                 Button(action: {
-                    showSettings = true
+                    AppDelegate.shared?.openPreferencesWindow()
                 }) {
                     Image(systemName: "gearshape.fill")
                         .font(.system(size: 13))

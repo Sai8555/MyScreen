@@ -177,8 +177,8 @@ public struct MenuBarView: View {
                     cacheSize = VideoCacheManager.shared.cacheSizeString()
                 }
 
-                menuButton(icon: "gearshape.fill", title: "Preferences...") {
-                    openMainWindow()
+                menuButton(icon: "gearshape.fill", title: "Preferences...", shortcut: "⌘,") {
+                    AppDelegate.shared?.openPreferencesWindow()
                 }
 
                 menuButton(icon: "power", title: "Quit MyScreen", shortcut: "⌘Q") {

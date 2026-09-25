@@ -15,6 +15,12 @@ struct MyScreenApp: App {
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 1120, height: 740)
         .commands {
+            CommandGroup(replacing: .appSettings) {
+                Button("Preferences...") {
+                    AppDelegate.shared?.openPreferencesWindow()
+                }
+                .keyboardShortcut(",", modifiers: .command)
+            }
             CommandGroup(replacing: .appTermination) {
                 Button("Quit MyScreen") {
                     WallpaperEngine.shared.stop()
