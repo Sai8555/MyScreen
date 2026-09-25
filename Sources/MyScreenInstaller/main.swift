@@ -1,6 +1,5 @@
 import SwiftUI
 import AppKit
-import AVFoundation
 
 // MARK: - Native Window Drag Area
 struct WindowDragArea: NSViewRepresentable {
@@ -16,58 +15,13 @@ struct WindowDragArea: NSViewRepresentable {
     }
 }
 
-// MARK: - Looping Video View (AVPlayerLayer)
-struct VideoBackgroundView: NSViewRepresentable {
-    let videoURL: URL?
-
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        view.wantsLayer = true
-
-        guard let videoURL = videoURL else { return view }
-
-        let asset = AVURLAsset(url: videoURL)
-        let item = AVPlayerItem(asset: asset)
-        let queuePlayer = AVQueuePlayer(playerItem: item)
-        queuePlayer.isMuted = true
-
-        let playerLooper = AVPlayerLooper(player: queuePlayer, templateItem: item)
-        context.coordinator.looper = playerLooper
-        context.coordinator.player = queuePlayer
-
-        let playerLayer = AVPlayerLayer(player: queuePlayer)
-        playerLayer.videoGravity = .resizeAspectFill
-        playerLayer.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
-        playerLayer.frame = view.bounds
-        view.layer?.addSublayer(playerLayer)
-
-        queuePlayer.play()
-        return view
-    }
-
-    func updateNSView(_ nsView: NSView, context: Context) {
-        if let layer = nsView.layer?.sublayers?.first as? AVPlayerLayer {
-            layer.frame = nsView.bounds
-        }
-    }
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator()
-    }
-
-    class Coordinator {
-        var player: AVQueuePlayer?
-        var looper: AVPlayerLooper?
-    }
-}
-
 // MARK: - Crystalline Glass Lens Pedestal
 struct GlassLensPedestal: View {
     var isHighlighted: Bool = false
 
     var body: some View {
         ZStack {
-            // Highly transparent glass refraction body (never opaque/black)
+            // Highly transparent glass refraction body
             Circle()
                 .fill(
                     LinearGradient(
@@ -81,7 +35,7 @@ struct GlassLensPedestal: View {
                 )
                 .frame(width: 126, height: 126)
 
-            // Specular glass highlight rim (catches top-left light)
+            // Specular glass highlight rim
             Circle()
                 .stroke(
                     LinearGradient(
@@ -113,13 +67,17 @@ struct InstallerView: View {
     @State private var isDraggingIcon = false
     @State private var isTargetHovered = false
 
-    private var videoURL: URL? {
-        if let bundleURL = Bundle.main.url(forResource: "installer_bg", withExtension: "mp4") {
-            return bundleURL
-        }
-        let localPath = URL(fileURLWithPath: "docs/assets/installer_bg.mp4")
-        if FileManager.default.fileExists(atPath: localPath.path) {
-            return localPath
+    private var backgroundImage: NSImage? {
+        let candidates: [URL?] = [
+            Bundle.main.resourceURL?.appendingPathComponent("installer_scenery.png"),
+            Bundle.main.url(forResource: "installer_scenery", withExtension: "png"),
+            URL(fileURLWithPath: "Sources/MyScreen/Resources/installer_scenery.png"),
+            URL(fileURLWithPath: "docs/assets/installer_scenery.png")
+        ]
+        for candidate in candidates {
+            if let url = candidate, FileManager.default.fileExists(atPath: url.path), let img = NSImage(contentsOf: url) {
+                return img
+            }
         }
         return nil
     }
@@ -144,16 +102,22 @@ struct InstallerView: View {
 
     var body: some View {
         ZStack {
-            // 1. Live Video Background Layer
-            VideoBackgroundView(videoURL: videoURL)
-                .edgesIgnoringSafeArea(.all)
+            // 1. High-Resolution Static Scenery Background Layer
+            if let bgImage = backgroundImage {
+                Image(nsImage: bgImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .edgesIgnoringSafeArea(.all)
+            } else {
+                Color.black.edgesIgnoringSafeArea(.all)
+            }
 
-            // 2. Subtle Dark Vignette for contrast
+            // 2. Subtle Dark Vignette for contrast & text readability
             LinearGradient(
                 gradient: Gradient(colors: [
-                    Color.black.opacity(0.35),
-                    Color.black.opacity(0.05),
-                    Color.black.opacity(0.4)
+                    Color.black.opacity(0.38),
+                    Color.black.opacity(0.08),
+                    Color.black.opacity(0.42)
                 ]),
                 startPoint: .top,
                 endPoint: .bottom
@@ -204,14 +168,14 @@ struct InstallerView: View {
                 Spacer()
 
                 // Center Stage: App Icon -> Arrow -> Applications Folder
-                HStack(spacing: 50) {
-                    // Left: MyScreen App Icon (Draggable & Always Forward on Drag)
-                    VStack(spacing: 12) {
+                HStack(spacing: 48) {
+                    // Left Column: MyScreen App Icon & Label
+                    VStack(spacing: 10) {
                         ZStack {
-                            // Crystalline Transparent Glass Pedestal (Video shows through!)
+                            // Crystalline Transparent Glass Pedestal
                             GlassLensPedestal(isHighlighted: false)
 
-                            // Interactive Draggable Icon (Always on forward side, disappears into Applications on install!)
+                            // Interactive Draggable Icon
                             Image(nsImage: appIconImage)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
@@ -229,8 +193,7 @@ struct InstallerView: View {
                                             isDraggingIcon = true
                                             iconOffset = value.translation
 
-                                            // Highlight target when dragged close to Applications (dx > 150)
-                                            if value.translation.width > 150 && abs(value.translation.height) < 90 {
+                                            if value.translation.width > 140 && abs(value.translation.height) < 90 {
                                                 isTargetHovered = true
                                                 statusText = "Release to Install"
                                             } else {
@@ -242,14 +205,12 @@ struct InstallerView: View {
                                             guard !isCompleted && !isInstalling else { return }
                                             isDraggingIcon = false
 
-                                            if value.translation.width > 150 && abs(value.translation.height) < 90 {
-                                                // Snapped into the Applications folder center!
+                                            if value.translation.width > 140 && abs(value.translation.height) < 90 {
                                                 withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
-                                                    iconOffset = CGSize(width: 300, height: 0)
+                                                    iconOffset = CGSize(width: 290, height: 0)
                                                 }
                                                 performInstall()
                                             } else {
-                                                // Spring back to pedestal
                                                 withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
                                                     iconOffset = .zero
                                                 }
@@ -260,10 +221,16 @@ struct InstallerView: View {
                                 )
                         }
                         .zIndex(isDraggingIcon ? 100 : 1)
+
+                        // Application Name below icon
+                        Text("MyScreen")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .shadow(color: .black.opacity(0.85), radius: 5, y: 2)
                     }
                     .zIndex(isDraggingIcon ? 100 : 1)
 
-                    // Center: Subtle Frosted Glass Arrow / Status
+                    // Center Column: Arrow / Status / Click-to-Install
                     VStack(spacing: 8) {
                         if isInstalling {
                             ProgressView()
@@ -287,13 +254,24 @@ struct InstallerView: View {
                             .tracking(1.2)
                             .foregroundColor(isCompleted ? .green : .white.opacity(0.9))
                             .shadow(color: .black.opacity(0.9), radius: 4, y: 2)
+
+                        if !isCompleted && !isInstalling {
+                            Button(action: { performInstall() }) {
+                                Text("or Click to Install")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.85))
+                                    .underline()
+                                    .shadow(color: .black.opacity(0.8), radius: 4, y: 1)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .padding(.top, 2)
+                        }
                     }
                     .frame(width: 150)
 
-                    // Right: Applications Folder Pedestal (Target)
-                    VStack(spacing: 12) {
+                    // Right Column: Applications Folder Pedestal & Label
+                    VStack(spacing: 10) {
                         ZStack {
-                            // Crystalline Transparent Glass Pedestal (Highlights on hover!)
                             GlassLensPedestal(isHighlighted: isTargetHovered)
                                 .scaleEffect(isTargetHovered ? 1.06 : 1.0)
                                 .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isTargetHovered)
@@ -304,12 +282,18 @@ struct InstallerView: View {
                                 .frame(width: 92, height: 92)
                                 .shadow(color: .black.opacity(0.5), radius: 10, y: 6)
                         }
+
+                        // Application Name below icon
+                        Text("Applications")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .shadow(color: .black.opacity(0.85), radius: 5, y: 2)
                     }
                 }
 
                 Spacer()
 
-                // Bottom Section: ONLY shown AFTER installation completes!
+                // Bottom Section: Success actions
                 Group {
                     if isCompleted {
                         HStack(spacing: 16) {
@@ -357,7 +341,6 @@ struct InstallerView: View {
                         }
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                     } else {
-                        // Empty space so the beautiful coastal scenery remains open and visible!
                         Color.clear.frame(height: 48)
                     }
                 }
@@ -378,20 +361,37 @@ struct InstallerView: View {
     private func performInstall() {
         guard !isInstalling && !isCompleted else { return }
         isInstalling = true
+        errorMessage = nil
         statusText = "Installing..."
 
         DispatchQueue.global(qos: .userInitiated).async {
-            // Candidate paths for MyScreen.app
-            let candidates: [URL] = [
-                Bundle.main.bundleURL.deletingLastPathComponent().appendingPathComponent("MyScreen.app"),
-                URL(fileURLWithPath: "build/MyScreen.app"),
-                Bundle.main.url(forResource: "MyScreen", withExtension: "app") ?? URL(fileURLWithPath: "/dev/null")
-            ]
+            var candidatePaths: [URL] = []
 
-            guard let sourceURL = candidates.first(where: { FileManager.default.fileExists(atPath: $0.path) }) else {
+            // 1. Inside installer bundle Resources
+            if let resURL = Bundle.main.resourceURL {
+                candidatePaths.append(resURL.appendingPathComponent("MyScreen.app"))
+            }
+            // 2. Sibling next to installer bundle
+            candidatePaths.append(Bundle.main.bundleURL.deletingLastPathComponent().appendingPathComponent("MyScreen.app"))
+            // 3. Mounted DMG root
+            candidatePaths.append(URL(fileURLWithPath: "/Volumes/MyScreen/MyScreen.app"))
+            // 4. Local workspace build directory
+            candidatePaths.append(URL(fileURLWithPath: "build/MyScreen.app"))
+
+            // Dynamically check any mounted volume
+            if let volumeURLs = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: nil, options: [.skipHiddenVolumes]) {
+                for vol in volumeURLs {
+                    candidatePaths.append(vol.appendingPathComponent("MyScreen.app"))
+                }
+            }
+
+            guard let sourceURL = candidatePaths.first(where: {
+                var isDir: ObjCBool = false
+                return FileManager.default.fileExists(atPath: $0.path, isDirectory: &isDir) && isDir.boolValue
+            }) else {
                 DispatchQueue.main.async {
                     self.isInstalling = false
-                    self.errorMessage = "Could not locate MyScreen.app in bundle."
+                    self.errorMessage = "Could not locate MyScreen.app to install."
                     self.statusText = "Installation Failed"
                 }
                 return
@@ -399,25 +399,42 @@ struct InstallerView: View {
 
             let destinationURL = URL(fileURLWithPath: "/Applications/MyScreen.app")
 
+            // Use /usr/bin/ditto for atomic, permission-preserving bundle copy
+            let ditto = Process()
+            ditto.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
+            ditto.arguments = [sourceURL.path, destinationURL.path]
+
             do {
-                if FileManager.default.fileExists(atPath: destinationURL.path) {
-                    try FileManager.default.removeItem(at: destinationURL)
-                }
+                try ditto.run()
+                ditto.waitUntilExit()
 
-                try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
-
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                        self.isInstalling = false
-                        self.isCompleted = true
-                        self.statusText = "Installation Complete"
+                if ditto.terminationStatus == 0 {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                            self.isInstalling = false
+                            self.isCompleted = true
+                            self.statusText = "Installation Complete"
+                        }
+                    }
+                } else {
+                    // Fallback to FileManager copy
+                    if FileManager.default.fileExists(atPath: destinationURL.path) {
+                        try? FileManager.default.removeItem(at: destinationURL)
+                    }
+                    try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                            self.isInstalling = false
+                            self.isCompleted = true
+                            self.statusText = "Installation Complete"
+                        }
                     }
                 }
             } catch {
                 DispatchQueue.main.async {
                     self.isInstalling = false
                     self.errorMessage = error.localizedDescription
-                    self.statusText = "Error"
+                    self.statusText = "Installation Failed"
                 }
             }
         }

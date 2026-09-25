@@ -1,11 +1,13 @@
 import AppKit
 import CoreGraphics
 
-let inputPath = "/tmp/bg_cropped.png"
-let outputPath = "Sources/MyScreen/Resources/dmg_background.png"
+let inputPath = "Sources/MyScreen/Resources/installer_scenery.png"
+let outputPngPath = "Sources/MyScreen/Resources/dmg_background.png"
+let outputTiffPath = "Sources/MyScreen/Resources/dmg_background.tiff"
+let output1xPngPath = "Sources/MyScreen/Resources/dmg_background_1x.png"
 
 guard let baseImage = NSImage(contentsOfFile: inputPath) else {
-    print("Error loading base image")
+    print("Error loading base image from \(inputPath)")
     exit(1)
 }
 
@@ -80,25 +82,29 @@ let subAttrs: [NSAttributedString.Key: Any] = [
 ]
 (NSString("4K Live Video Wallpaper Engine for macOS")).draw(at: NSPoint(x: 60, y: height - 130), withAttributes: subAttrs)
 
+// Pedestals
 // Center Y = 424 px from bottom (flipped coords)
+// Icon center is at (180 pt, 212 pt) -> (360 px, 424 px)
+// Applications center is at (452 pt, 212 pt) -> (904 px, 424 px)
+// Radius is set to 172 px (86 pt) so that both the 90 pt icon AND the text label below it
+// sit completely inside the pedestal with generous padding, and the stroke never intersects text!
 let centerY: CGFloat = 424
 let leftCenterX: CGFloat = 360  // 180 pt
 let rightCenterX: CGFloat = 904 // 452 pt
-let radius: CGFloat = 126       // 63 pt radius
+let radius: CGFloat = 172       // 86 pt radius
 
-// Function to draw crystal glass lens circle
 func drawGlassCircle(centerX: CGFloat, centerY: CGFloat) {
     let rect = NSRect(x: centerX - radius, y: centerY - radius, width: radius * 2, height: radius * 2)
     let path = NSBezierPath(ovalIn: rect)
 
     let glassGrad = NSGradient(colors: [
-        NSColor.white.withAlphaComponent(0.22),
+        NSColor.white.withAlphaComponent(0.20),
         NSColor.white.withAlphaComponent(0.05)
     ])!
     glassGrad.draw(in: path, angle: 45)
 
-    path.lineWidth = 3.0
-    NSColor.white.withAlphaComponent(0.7).setStroke()
+    path.lineWidth = 2.5
+    NSColor.white.withAlphaComponent(0.65).setStroke()
     path.stroke()
 }
 
@@ -108,8 +114,8 @@ drawGlassCircle(centerX: rightCenterX, centerY: centerY)
 // Draw center arrow
 let arrowPath = NSBezierPath()
 let arrowY = centerY
-let arrowStartX: CGFloat = 580
-let arrowEndX: CGFloat = 684
+let arrowStartX: CGFloat = 575
+let arrowEndX: CGFloat = 689
 
 arrowPath.move(to: NSPoint(x: arrowStartX, y: arrowY))
 arrowPath.line(to: NSPoint(x: arrowEndX, y: arrowY))
@@ -128,11 +134,18 @@ arrowPath.stroke()
 
 NSGraphicsContext.restoreGraphicsState()
 
-// Export to PNG
+// Export to PNG (2x)
 guard let pngData = rep.representation(using: .png, properties: [:]) else {
     print("Error generating PNG")
     exit(1)
 }
+try! pngData.write(to: URL(fileURLWithPath: outputPngPath))
 
-try! pngData.write(to: URL(fileURLWithPath: outputPath))
-print("Successfully generated clean DMG background with v1.0.0 badge")
+// Export to TIFF (Multi-representation Retina TIFF for dmgbuild)
+let tiffImage = NSImage(size: NSSize(width: 632, height: 424))
+tiffImage.addRepresentation(rep)
+if let tiffData = tiffImage.tiffRepresentation {
+    try! tiffData.write(to: URL(fileURLWithPath: outputTiffPath))
+}
+
+print("Successfully generated clean DMG background without any text overlap")

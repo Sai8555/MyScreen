@@ -61,9 +61,9 @@ cat << 'EOF' > "$CONTENTS/Info.plist"
 </plist>
 EOF
 
-echo "==> Copying assets, video, and application bundle..."
+echo "==> Copying assets, scenery image, and application bundle..."
 cp "Sources/MyScreen/Resources/AppIcon.icns" "$RESOURCES/AppIcon.icns"
-cp "docs/assets/installer_bg.mp4" "$RESOURCES/installer_bg.mp4"
+cp "Sources/MyScreen/Resources/installer_scenery.png" "$RESOURCES/installer_scenery.png"
 if [ -d "$BUILD_DIR/MyScreen.app" ]; then
     echo "==> Bundling MyScreen.app into installer..."
     cp -R "$BUILD_DIR/MyScreen.app" "$RESOURCES/MyScreen.app"
