@@ -408,6 +408,13 @@ struct InstallerView: View {
                 try ditto.run()
                 ditto.waitUntilExit()
 
+                // Automatically remove download quarantine attributes so macOS Gatekeeper never blocks the app
+                let xattr = Process()
+                xattr.executableURL = URL(fileURLWithPath: "/usr/bin/xattr")
+                xattr.arguments = ["-cr", destinationURL.path]
+                try? xattr.run()
+                xattr.waitUntilExit()
+
                 if ditto.terminationStatus == 0 {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
@@ -422,6 +429,13 @@ struct InstallerView: View {
                         try? FileManager.default.removeItem(at: destinationURL)
                     }
                     try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+
+                    let fallbackXattr = Process()
+                    fallbackXattr.executableURL = URL(fileURLWithPath: "/usr/bin/xattr")
+                    fallbackXattr.arguments = ["-cr", destinationURL.path]
+                    try? fallbackXattr.run()
+                    fallbackXattr.waitUntilExit()
+
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                             self.isInstalling = false
