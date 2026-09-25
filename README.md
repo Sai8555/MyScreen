@@ -100,6 +100,17 @@ brew install --cask myscreen
 3. Drag **MyScreen** into your **Applications** folder.
 4. Launch MyScreen from Launchpad or Spotlight (`⌘ Space`).
 
+> [!NOTE]
+> **First Launch on macOS (Gatekeeper "Open Anyway"):**  
+> Because MyScreen is an open-source project and not distributed through the Mac App Store, macOS may show a prompt: *"Apple cannot check it for malicious software"*.
+>
+> To open it on macOS Sonoma / Sequoia:
+> 1. Go to **System Settings** ➔ **Privacy & Security**.
+> 2. Scroll down to the **Security** section.
+> 3. Click **"Open Anyway"** next to *MyScreen was blocked*.
+> 4. Click **"Open"** when prompted. (You only need to do this once).  
+> *(Or use **Method 1 (Homebrew)** above to install without any popups!)*
+
 ### Method 3: Build from Source
 Ensure you have Xcode Command Line Tools installed (`xcode-select --install`):
 
