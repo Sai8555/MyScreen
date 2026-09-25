@@ -23,24 +23,24 @@ show_toolbar = False
 show_pathbar = False
 show_sidebar = False
 
-# Files to include (Clean names without visible labels)
-NBSP_1 = '\u00A0'
-NBSP_2 = '\u00A0\u00A0'
-
+# Files to include (Standard native MyScreen app)
 files = [
-    ('build/Install MyScreen.app', f'{NBSP_1}.app')
+    'build/MyScreen.app'
 ]
 
+# Applications symlink
 symlinks = {
-    NBSP_2: '/Applications'
+    'Applications': '/Applications'
 }
 
+# Icon locations centered on glass pedestals
 icon_locations = {
-    f'{NBSP_1}.app': (180, 212),
-    NBSP_2: (452, 212)
+    'MyScreen.app': (180, 212),
+    'Applications': (452, 212)
 }
 
-hide_extensions = [f'{NBSP_1}.app']
+# Hide .app extension so Finder displays clean "MyScreen" label
+hide_extensions = ['MyScreen.app']
 
 # Volume icon
 badge_icon = 'Sources/MyScreen/Resources/AppIcon.icns'

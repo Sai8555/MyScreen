@@ -31,9 +31,6 @@ if [ ! -d "$APP_BUNDLE" ]; then
     ./build_app.sh
 fi
 
-echo "==> Building Native Live Video Installer app..."
-./build_installer_app.sh
-
 # Clean up any previous mounts, files, or staging dirs
 hdiutil detach "/Volumes/$VOL_NAME" -force 2>/dev/null || true
 rm -rf "$STAGE_DIR"
@@ -41,11 +38,9 @@ rm -f "$DMG_FINAL"
 rm -f "$BUILD_DIR"/rw.*.dmg
 mkdir -p "$STAGE_DIR"
 
-# 2. Populate staging folder with clean invisible icon names
-echo "==> Staging live video installer without bottom labels..."
-NBSP_1=$'\xc2\xa0'
-NBSP_2=$'\xc2\xa0\xc2\xa0'
-cp -R "$BUILD_DIR/Install MyScreen.app" "$STAGE_DIR/$NBSP_1.app"
+# 2. Populate staging folder with MyScreen.app
+echo "==> Staging MyScreen.app..."
+cp -R "$APP_BUNDLE" "$STAGE_DIR/"
 
 DMGBUILD_BIN="$DIR/.build/dmg_venv/bin/dmgbuild"
 
@@ -62,10 +57,9 @@ elif command -v create-dmg &>/dev/null; then
         --window-size 632 424 \
         --text-size 12 \
         --icon-size 90 \
-        --icon "$NBSP_1.app" 180 212 \
-        --hide-extension "$NBSP_1.app" \
+        --icon "MyScreen.app" 180 212 \
+        --hide-extension "MyScreen.app" \
         --app-drop-link 452 212 \
-        --app-drop-link-name "$NBSP_2" \
         --format UDZO \
         --overwrite \
         "$DMG_FINAL" \
@@ -80,10 +74,9 @@ elif command -v create-dmg &>/dev/null; then
                 --window-size 632 424 \
                 --text-size 12 \
                 --icon-size 90 \
-                --icon "$NBSP_1.app" 180 212 \
-                --hide-extension "$NBSP_1.app" \
+                --icon "MyScreen.app" 180 212 \
+                --hide-extension "MyScreen.app" \
                 --app-drop-link 452 212 \
-                --app-drop-link-name "$NBSP_2" \
                 --skip-jenkins \
                 --format UDZO \
                 --overwrite \
