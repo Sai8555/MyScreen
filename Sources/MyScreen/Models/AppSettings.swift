@@ -89,6 +89,11 @@ public final class AppSettings: ObservableObject {
         self.pauseOnBattery = defaults.object(forKey: Keys.pauseOnBattery) != nil ? defaults.bool(forKey: Keys.pauseOnBattery) : true
         self.pauseOnScreenSleep = defaults.object(forKey: Keys.pauseOnScreenSleep) != nil ? defaults.bool(forKey: Keys.pauseOnScreenSleep) : true
         if #available(macOS 13.0, *) {
+            let hasInitialized = defaults.bool(forKey: "hasInitializedBackgroundService")
+            if !hasInitialized {
+                defaults.set(true, forKey: "hasInitializedBackgroundService")
+                try? SMAppService.mainApp.register()
+            }
             self.autoStartOnLogin = SMAppService.mainApp.status == .enabled
         } else {
             self.autoStartOnLogin = defaults.bool(forKey: Keys.autoStartOnLogin)
