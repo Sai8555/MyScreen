@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyScreen - Live Interactive Sakura Installer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    body {
+      background: radial-gradient(circle at center, #141727 0%, #080911 100%);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+    }
+
+    /* Installer Window Frame */
+    .installer-window {
+      position: relative;
+      width: 680px;
+      height: 440px;
+      border-radius: 18px;
+      background: #0d101c;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Window Title Bar */
+    .titlebar {
+      height: 36px;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      background: rgba(18, 22, 38, 0.75);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      z-index: 10;
+    }
+    .traffic-lights {
+      display: flex;
+      gap: 7px;
+    }
+    .traffic-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .dot-close { background: #ff5f57; }
+    .dot-min { background: #febc2e; }
+    .dot-max { background: #28c840; }
+    .window-title {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.6);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Canvas for falling cherry blossoms */
+    #sakura-canvas {
+      position: absolute;
+      top: 36px;
+      left: 0;
+      width: 100%;
+      height: calc(100% - 36px);
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* Stage Layer */
+    .stage {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 60px;
+      background: #0d101c;
+      overflow: hidden;
+    }
+
+    /* Subtle Dark Vignette */
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle, transparent 40%, rgba(7, 8, 16, 0.8) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Target Pedestal */
+    .pedestal {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 70%);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 3;
+      transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .pedestal.highlight {
+      border-color: #00f2fe;
+      box-shadow: 0 0 35px rgba(0, 242, 254, 0.6), inset 0 0 20px rgba(0, 242, 254, 0.3);
+      transform: scale(1.05);
+    }
+
+    /* Draggable App Icon */
+    .draggable-app {
+      width: 96px;
+      height: 96px;
+      border-radius: 20px;
+      cursor: grab;
+      position: relative;
+      z-index: 5;
+      transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease;
+      filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.6));
+    }
+    .draggable-app:active {
+      cursor: grabbing;
+      transform: scale(1.08);
+      filter: drop-shadow(0 20px 36px rgba(0, 242, 254, 0.5));
+    }
+    .draggable-app img {
+      width: 100%;
+      height: 100%;
+      border-radius: 20px;
+      pointer-events: none;
+    }
+
+    /* Target Applications Folder */
+    .target-folder {
+      width: 96px;
+      height: 96px;
+      position: relative;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.6));
+    }
+    .target-folder svg {
+      width: 90px;
+      height: 90px;
+    }
+
+    .icon-label {
+      margin-top: 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.85);
+      letter-spacing: 0.2px;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Glowing Flow Arrow in Center */
+    .arrow-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      z-index: 3;
+    }
+    .arrow-svg {
+      width: 110px;
+      height: 36px;
+    }
+    .instruction {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: rgba(255, 182, 193, 0.8);
+      font-weight: 600;
+      text-shadow: 0 0 10px rgba(255, 105, 180, 0.6);
+      animation: pulse 2s infinite ease-in-out;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.7; transform: translateY(0); }
+      50% { opacity: 1; transform: translateY(-2px); }
+    }
+
+    /* Success Message Modal */
+    .success-badge {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      opacity: 0;
+      background: rgba(14, 18, 32, 0.92);
+      backdrop-filter: blur(25px);
+      border: 1px solid rgba(0, 242, 254, 0.5);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 242, 254, 0.4);
+      padding: 24px 36px;
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+      z-index: 20;
+      pointer-events: none;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .success-badge.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .hint {
+      margin-top: 20px;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="installer-window">
+    <div class="titlebar">
+      <div class="traffic-lights">
+        <div class="traffic-dot dot-close"></div>
+        <div class="traffic-dot dot-min"></div>
+        <div class="traffic-dot dot-max"></div>
+      </div>
+      <div class="window-title">🌸 MyScreen Installer</div>
+    </div>
+
+    <div class="stage" id="stage">
+      <video autoplay loop muted playsinline style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0;">
+        <source src="installer_bg.mp4" type="video/mp4">
+      </video>
+      <div class="vignette"></div>
+      <canvas id="sakura-canvas"></canvas>
+
+      <!-- Left: MyScreen App -->
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <div class="pedestal" id="app-pedestal">
+          <div class="draggable-app" id="draggable-app" draggable="true">
+            <img src="/Users/saijanapareddy/Desktop/botforc/myscreen/docs/assets/app_icon.png" alt="MyScreen" onerror="this.src='/Users/saijanapareddy/Desktop/botforc/myscreen/docs/assets/app_icon.jpg'">
+          </div>
+        </div>
+        <div class="icon-label">MyScreen</div>
+      </div>
+
+      <!-- Center: Glowing Neon Arrow -->
+      <div class="arrow-container">
+        <svg class="arrow-svg" viewBox="0 0 110 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="sakuraGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#00f2fe" />
+              <stop offset="50%" stop-color="#f355da" />
+              <stop offset="100%" stop-color="#ff758c" />
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <path d="M 10 18 H 92 M 76 6 L 94 18 L 76 30" stroke="url(#sakuraGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+        </svg>
+        <span class="instruction">Drag to Install</span>
+      </div>
+
+      <!-- Right: Applications Folder Target -->
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <div class="pedestal" id="target-pedestal">
+          <div class="target-folder" id="target-folder">
+            <svg viewBox="0 0 100 100" fill="none">
+              <!-- Folder Body -->
+              <rect x="10" y="24" width="80" height="62" rx="10" fill="#24c064" />
+              <path d="M 10 28 L 36 28 L 44 36 L 90 36 A 8 8 0 0 1 90 44 L 10 44 Z" fill="#2fd872" />
+              <rect x="10" y="36" width="80" height="50" rx="8" fill="#2fd872" />
+              <!-- App Store 'A' Glyph -->
+              <path d="M 50 48 L 40 72 H 46 L 48 66 H 52 L 54 72 H 60 L 50 48 Z M 50 56 L 51.5 62 H 48.5 Z" fill="rgba(255,255,255,0.7)"/>
+            </svg>
+          </div>
+        </div>
+        <div class="icon-label">Applications</div>
+      </div>
+
+      <!-- Success Installed Modal -->
+      <div class="success-badge" id="success-badge">
+        <div style="font-size: 38px;">🎉</div>
+        <div style="font-size: 18px; font-weight: 600;">Installed Successfully!</div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.7);">MyScreen is ready in Applications</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="hint">🌸 Interactive Preview: Try dragging <b>MyScreen</b> into <b>Applications</b>!</p>
+
+  <script>
+    // Falling Cherry Blossom Petals Simulation
+    const canvas = document.getElementById('sakura-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    class SakuraPetal {
+      constructor() {
+        this.reset(true);
+      }
+      reset(initial = false) {
+        this.x = Math.random() * canvas.width;
+        this.y = initial ? Math.random() * canvas.height : -20;
+        this.size = 7 + Math.random() * 8;
+        this.speedY = 0.8 + Math.random() * 1.4;
+        this.speedX = 0.4 + Math.random() * 1.0;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.rotSpeed = (Math.random() - 0.5) * 0.04;
+        this.flip = Math.random() * Math.PI * 2;
+        this.flipSpeed = 0.02 + Math.random() * 0.03;
+        this.alpha = 0.35 + Math.random() * 0.45;
+        this.depth = 0.6 + Math.random() * 0.6; // 3D depth scale
+      }
+      update() {
+        this.y += this.speedY * this.depth;
+        this.x += (Math.sin(this.y * 0.02) + this.speedX) * this.depth;
+        this.rotation += this.rotSpeed;
+        this.flip += this.flipSpeed;
+
+        if (this.y > canvas.height + 20 || this.x > canvas.width + 20) {
+          this.reset(false);
+        }
+      }
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        ctx.scale(this.depth, this.depth * Math.cos(this.flip));
+
+        // Soft sakura pink gradient
+        const grad = ctx.createRadialGradient(0, 0, 1, 0, 0, this.size);
+        grad.addColorStop(0, `rgba(255, 230, 240, ${this.alpha})`);
+        grad.addColorStop(0.7, `rgba(255, 170, 205, ${this.alpha * 0.85})`);
+        grad.addColorStop(1, `rgba(255, 130, 185, ${this.alpha * 0.6})`);
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        // Petal shape
+        ctx.moveTo(0, -this.size);
+        ctx.bezierCurveTo(this.size * 0.8, -this.size * 0.8, this.size * 0.8, this.size * 0.5, 0, this.size);
+        ctx.bezierCurveTo(-this.size * 0.8, this.size * 0.5, -this.size * 0.8, -this.size * 0.8, 0, -this.size);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    const petals = Array.from({ length: 42 }, () => new SakuraPetal());
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const petal of petals) {
+        petal.update();
+        petal.draw();
+      }
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // Drag and Drop Logic
+    const draggable = document.getElementById('draggable-app');
+    const targetPedestal = document.getElementById('target-pedestal');
+    const successBadge = document.getElementById('success-badge');
+
+    draggable.addEventListener('dragstart', (e) => {
+      targetPedestal.classList.add('highlight');
+      e.dataTransfer.setData('text/plain', 'myscreen');
+    });
+
+    draggable.addEventListener('dragend', () => {
+      targetPedestal.classList.remove('highlight');
+    });
+
+    targetPedestal.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      targetPedestal.classList.add('highlight');
+    });
+
+    targetPedestal.addEventListener('dragleave', () => {
+      targetPedestal.classList.remove('highlight');
+    });
+
+    targetPedestal.addEventListener('drop', (e) => {
+      e.preventDefault();
+      targetPedestal.classList.remove('highlight');
+
+      // Burst of petals on drop
+      for (let i = 0; i < 30; i++) {
+        const burstPetal = new SakuraPetal();
+        burstPetal.x = canvas.width * 0.75 + (Math.random() - 0.5) * 60;
+        burstPetal.y = canvas.height * 0.5 + (Math.random() - 0.5) * 60;
+        burstPetal.speedY = (Math.random() - 0.5) * 4;
+        burstPetal.speedX = (Math.random() - 0.5) * 4;
+        petals.push(burstPetal);
+      }
+
+      // Show success modal
+      successBadge.classList.add('show');
+      setTimeout(() => {
+        successBadge.classList.remove('show');
+      }, 2600);
+    });
+  </script>
+</body>
+</html>
